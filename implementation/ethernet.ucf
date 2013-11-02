@@ -1,0 +1,124 @@
+#Face Ethernet
+
+Net ETH_RESET_0 LOC=J7 | IOSTANDARD = LVCMOS25 | TIG;
+
+Net GMII_TXD_0<0> LOC=J6 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<1> LOC=K7 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<2> LOC=L5 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<3> LOC=K6 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<4> LOC=L4 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<5> LOC=L6 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<6> LOC=M5 | IOSTANDARD = LVCMOS25;
+Net GMII_TXD_0<7> LOC=M6 | IOSTANDARD = LVCMOS25;
+
+Net GMII_TX_EN_0 LOC=M7 | IOSTANDARD = LVCMOS25;
+Net GMII_TX_ER_0 LOC=N5 | IOSTANDARD = LVCMOS25;
+Net GMII_TX_CLK_0 LOC=P7 | IOSTANDARD = LVCMOS25;
+
+Net GMII_RXD_0<0> LOC=P5 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<1> LOC=P6 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<2> LOC=R6 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<3> LOC=T6 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<4> LOC=N7 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<5> LOC=R7 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<6> LOC=U7 | IOSTANDARD = LVCMOS25;
+Net GMII_RXD_0<7> LOC=R8 | IOSTANDARD = LVCMOS25;
+
+Net GMII_RX_DV_0 LOC=T8 | IOSTANDARD = LVCMOS25;
+Net GMII_RX_ER_0 LOC=N8 | IOSTANDARD = LVCMOS25;
+Net GMII_RX_CLK_0 LOC=G15 | IOSTANDARD = LVCMOS25;
+
+Net GTX_CLK_0  LOC=K17 | IOSTANDARD = LVCMOS25;
+# Aux Ethernet
+
+#Net GMII_TXD_1<0> LOC=L24 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<1> LOC=J24 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<2> LOC=J26 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<3> LOC=M28 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<4> LOC=K27 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<5> LOC=N28 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<6> LOC=N27 | IOSTANDARD = LVCMOS25;
+#Net GMII_TXD_1<7> LOC=M27 | IOSTANDARD = LVCMOS25;
+
+#Net GMII_TX_EN_1 LOC=P26 | IOSTANDARD = LVCMOS25;
+#Net GMII_TX_ER_1 LOC=P27 | IOSTANDARD = LVCMOS25;
+#Net GMII_TX_CLK_1 LOC=AF18 | IOSTANDARD = LVCMOS25;
+
+#Net GMII_RXD_1<0> LOC=K24 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<1> LOC=J25 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<2> LOC=J27 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<3> LOC=K28 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<4> LOC=L28 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<5> LOC=M26 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<6> LOC=L26 | IOSTANDARD = LVCMOS25;
+#Net GMII_RXD_1<7> LOC=K26 | IOSTANDARD = LVCMOS25;
+
+#Net GMII_RX_DV_1 LOC=M25 | IOSTANDARD = LVCMOS25;
+#Net GMII_RX_ER_1 LOC=L25 | IOSTANDARD = LVCMOS25;
+#Net GMII_RX_CLK_1 LOC=AH18 | IOSTANDARD = LVCMOS25;
+
+
+
+
+##################################
+# BLOCK Level constraints
+##################################
+
+# EMAC0 Clocking
+# EMAC0 TX Clock input from BUFG
+NET "*/tx_clk" TNM_NET        = "clk_tx0";
+TIMEGRP  "ethmac_tx_clk0"            = "clk_tx0";
+TIMESPEC "TS_ethmac_tx_clk0"         = PERIOD "ethmac_tx_clk0" 8 ns HIGH 50 %;
+# EMAC0 RX PHY Clock
+NET "GMII_RX_CLK_0" TNM_NET   = "phy_clk_rx0";
+TIMEGRP  "ethmac_clk_phy_rx0"        = "phy_clk_rx0";
+TIMESPEC "TS_ethmac_clk_phy_rx0"     = PERIOD "ethmac_clk_phy_rx0" 7.5 ns HIGH 50 %;
+
+
+
+# Set the IDELAY values on the data inputs.
+# Please modify to suit your design.
+INST "*gmii0?ideldv"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld0"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld1"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld2"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld3"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld4"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld5"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld6"  IDELAY_VALUE = 40;
+INST "*gmii0?ideld7"  IDELAY_VALUE = 40;
+INST "*gmii0?ideler"  IDELAY_VALUE = 40;
+
+INST "*gmii_rxc0_delay" IDELAY_VALUE = 0;
+INST "*gmii_rxc0_delay" SIGNAL_PATTERN = CLOCK;
+
+# Set IODELAY_GROUP constraint for IDELAYs
+INST "*gmii0?ideldv"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld0"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld1"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld2"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld3"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld4"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld5"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld6"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideld7"  IODELAY_GROUP = IG_v5_emac;
+INST "*gmii0?ideler"  IODELAY_GROUP = IG_v5_emac;
+
+INST "*gmii_rxc0_delay" IODELAY_GROUP = IG_v5_emac;
+
+# GMII Receiver Constraints:  place flip-flops in IOB
+INST "*gmii0?RXD_TO_MAC*"    IOB = true;
+INST "*gmii0?RX_DV_TO_MAC"   IOB = true;
+INST "*gmii0?RX_ER_TO_MAC"   IOB = true;
+
+INST "*gmii0?GMII_TXD_?"     IOB = true;
+INST "*gmii0?GMII_TX_EN"     IOB = true;
+INST "*gmii0?GMII_TX_ER"     IOB = true;
+
+# The following constraints work in conjunction with IDELAY_VALUE settings to
+# check that the GMII receive bus remains in alignment with the rising edge of
+# gmii_rx_clk_0, to within 2ns setup time and 0 hold time.
+INST "gmii_rxd_0<?>" TNM = "gmii_rx_0";
+INST "gmii_rx_dv_0"  TNM = "gmii_rx_0";
+INST "gmii_rx_er_0"  TNM = "gmii_rx_0";
+TIMEGRP "gmii_rx_0" OFFSET = IN 2 ns VALID 2 ns BEFORE "gmii_rx_clk_0" RISING;

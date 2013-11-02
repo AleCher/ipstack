@@ -1,0 +1,44 @@
+onerror {resume}
+quietly WaveActivateNextPane {} 0
+add wave -noupdate -format Logic /test_ip_minimal/eth_tx_clk
+add wave -noupdate -format Logic /test_ip_minimal/eth_rx_clk
+add wave -noupdate -format Literal -radix hexadecimal /test_ip_minimal/uut/udp_rx
+add wave -noupdate -format Logic /test_ip_minimal/uut/udp_rx_dv
+add wave -noupdate -format Literal -radix hexadecimal /test_ip_minimal/eth_rx_data
+add wave -noupdate -format Logic /test_ip_minimal/eth_rx_data_valid
+add wave -noupdate -format Literal /test_ip_minimal/uut/rx_state
+add wave -noupdate -format Logic /test_ip_minimal/eth_rx_frame_good
+add wave -noupdate -format Logic /test_ip_minimal/eth_rx_frame_bad
+add wave -noupdate -format Literal -radix hexadecimal /test_ip_minimal/eth_tx_data
+add wave -noupdate -format Logic /test_ip_minimal/eth_tx_data_en
+add wave -noupdate -format Logic /test_ip_minimal/eth_tx_ack
+add wave -noupdate -format Literal /test_ip_minimal/send_state
+add wave -noupdate -format Literal /test_ip_minimal/send_state_next
+add wave -noupdate -format Literal /test_ip_minimal/w
+add wave -noupdate -format Literal /test_ip_minimal/pkg_pos
+add wave -noupdate -format Literal /test_ip_minimal/uut/eth_tx_state
+add wave -noupdate -format Literal /test_ip_minimal/uut/tx_pos
+add wave -noupdate -format Literal -radix unsigned /test_ip_minimal/uut/tx_len
+add wave -noupdate -format Analog-Step -height 84 -max 1328.0 -radix decimal /test_ip_minimal/rd_data_count
+add wave -noupdate -format Literal -radix unsigned /test_ip_minimal/udp_tx_pending_data
+add wave -noupdate -format Logic /test_ip_minimal/udp_tx_rden
+add wave -noupdate -format Literal -radix hexadecimal /test_ip_minimal/udp_tx
+add wave -noupdate -format Logic /test_ip_minimal/udp_rx_dv
+add wave -noupdate -format Literal -radix hexadecimal /test_ip_minimal/udp_rx
+TreeUpdate [SetDefaultTree]
+WaveRestoreCursors {{Cursor 1} {3035373 ps} 0}
+configure wave -namecolwidth 324
+configure wave -valuecolwidth 100
+configure wave -justifyvalue left
+configure wave -signalnamewidth 0
+configure wave -snapdistance 10
+configure wave -datasetprefix 0
+configure wave -rowmargin 4
+configure wave -childrowmargin 2
+configure wave -gridoffset 0
+configure wave -gridperiod 1
+configure wave -griddelta 40
+configure wave -timeline 0
+configure wave -timelineunits ns
+update
+WaveRestoreZoom {2952253 ps} {3127435 ps}

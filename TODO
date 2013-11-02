@@ -1,0 +1,7 @@
+ARP table
+Improve UDP functionality
+Add DHCP client support
+Make TX part more "pretty"
+Add module for TCP support
+Ping and other ICMPs
+Multicast
