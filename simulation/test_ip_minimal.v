@@ -57,6 +57,9 @@ module test_ip_minimal;
 		end
 	end
 
+reg [1:0] finish_cond = 0;
+initial forever #100 if (&finish_cond) $finish();
+
 reg eth_tx_data_en_r=0;
 reg [4:0] ask_delay=0;
 
@@ -68,14 +71,12 @@ end
 
 parameter udp_len = 50;
 reg [7:0] udp [udp_len-1:0];
-	
+
 parameter arp_ack_len = 42;
 reg [7:0] arp_ack [arp_ack_len-1:0] ;
 
 initial $readmemh ("pkg_arp_ack.hex", arp_ack) ;
 initial $readmemh ("pkg_udp.hex", udp) ;
-//initial $readmemh ("pkg_udp_trunc.hex", udp) ;
-//initial $writememh ("pkg_arp_ack.hex",  arp_ack );
 
 reg [4:0] send_state = 0;
 reg [4:0] send_state_next = 0;
@@ -146,7 +147,46 @@ always @(posedge eth_rx_clk) case (send_state)
 	
 	15: begin
 		if (w) w <= w - 1;
-		else $finish();
+		else begin
+			finish_cond[0] = 1;
+			send_state <= 11;
+		end
+	end
+endcase
+
+// UDP TX
+reg [4:0] state_udp = 0;
+integer udp_wait;
+integer udp_pkt_size = 5;
+
+always @(posedge eth_tx_clk) case (state_udp)
+	0: if (send_state == 11) // ARP request finished
+		state_udp <= 1;
+
+	1: begin
+		udp_tx_pending_data <= udp_pkt_size;
+		if (udp_tx_rden) state_udp <= 2;
+		udp_tx <= 8'hBB;
+	end
+
+	2: begin
+		udp_tx_pending_data <= udp_tx_pending_data - 1;
+		if (udp_tx_pending_data == 2) udp_tx <= 8'hEE;
+		else udp_tx <= 8'h88;
+
+		if (!udp_tx_rden) begin
+			state_udp <= 3;
+			udp_wait <= 100;
+		end
+	end
+
+	3: begin
+		if (udp_wait) udp_wait <= udp_wait - 1;
+		else begin
+			state_udp <= 1;
+			udp_pkt_size = udp_pkt_size * 6 / 5;
+			if (udp_pkt_size > 9000) finish_cond[1] = 1;
+		end
 	end
 endcase
 
@@ -167,7 +207,6 @@ integer tx_packet_readpos;
 
 reg [1:0] eth_tx_pkt = 0;
 always @(posedge eth_tx_data_en) begin
-	$display("TX begin");
 	eth_tx_pkt <= 1;
 	tx_packet_len <= 0;
 end
@@ -178,14 +217,12 @@ end
 
 always @(posedge eth_tx_clk)
 	if (eth_tx_data_en && eth_tx_pkt==2) begin
-		$write("%X ", eth_tx_data);
 		tx_packet[tx_packet_len] <= eth_tx_data;
 		tx_packet_len <= tx_packet_len + 1;
 	end
 
 always @(negedge eth_tx_data_en) 
 	if (eth_tx_pkt==2) begin
-		$display("\nTX end");
 		eth_tx_pkt <= 0;
 		$fwrite(pcap, "%u", {t, 32'h0, tx_packet_len, tx_packet_len});
 		for (tx_packet_readpos = 0; tx_packet_readpos < tx_packet_len; tx_packet_readpos = tx_packet_readpos + 1)
@@ -198,19 +235,16 @@ integer rx_packet_len = 0;
 integer rx_packet_readpos;
 
 always @(posedge eth_rx_data_valid) begin
-	$display("RX begin");
 	rx_packet_len <= 0;
 end
 
 always @(posedge eth_rx_clk)
 	if (eth_rx_data_valid) begin
-		$write("%X ", eth_rx_data);
 		rx_packet[rx_packet_len] <= eth_rx_data;
 		rx_packet_len <= rx_packet_len + 1;
 	end
 
 always @(negedge eth_rx_data_valid) begin
-	$display("\nRX end");
 	if (rx_packet_len) begin
 		$fwrite(pcap, "%u", {t, 32'h0, rx_packet_len, rx_packet_len});
 		for (rx_packet_readpos = 0; rx_packet_readpos < rx_packet_len; rx_packet_readpos = rx_packet_readpos + 1)
