@@ -17,7 +17,7 @@ module ip_minimal(
     output reg         udp_rx_dv,
     
     input wire [ 7: 0] udp_tx,
-    input wire [15: 0] udp_tx_pending_data, //max 1472 byte
+    input wire [15: 0] udp_tx_pending_data,
     output reg         udp_tx_rden
 );
 
@@ -51,7 +51,7 @@ reg [31:0] dest_ip_addr =  32'h0a_05_05_01;*/
 
 
 reg [7:0] rx_state = `RX_ST_PKT_BEGIN;
-reg [10:0] rx_pos = 0;
+reg [15:0] rx_pos = 0;
 
 reg [47:0] rx_mac;
 reg [7:0] eth_rx_data_r=0;
@@ -79,7 +79,7 @@ reg [7:0] rx_send_event;
 reg reply_req=0;
 reg reply_ack=0;
 
-reg [10:0] rx_udp_len;
+reg [15:0] rx_udp_len;
 
 reg [47:0] arp_reply_mac;
 reg [31:0] arp_reply_ip;
@@ -192,14 +192,14 @@ always @(posedge eth_rx_clk)
 `define TX_ST_END_WAIT       8'b00100000
 
 reg [10:0] eth_tx_state = `TX_ST_WAIT;
-reg [10:0] tx_pos;
-reg [10:0] tx_len = 0;
+reg [15:0] tx_pos;
+reg [15:0] tx_len = 0;
 reg eth_tx_start=0;
 reg [47:0] dest_mac_addr;
 reg [7:0] tx_send_event=0;
 
 reg [7:0] eth_tx_data_payload;
-reg [10:0] udp_payload_size;
+reg [15:0] udp_payload_size;
 
 `define HEADER_MAC 14
 `define HEADER_IP 20
@@ -215,16 +215,15 @@ begin
 		reply_ack <= reply_req;
 		tx_send_event <= rx_send_event;
 	end else
-	if (udp_tx_pending_data>=8) begin
+	if (udp_tx_pending_data) begin
 		tx_send_event <= `SEND_PKT_UDP;
 	end
-	
-	
+
 	case (eth_tx_state)
 		`TX_ST_WAIT: if (tx_send_event) begin
 			case (tx_send_event)
 				`SEND_PKT_ARP_REPLY: begin dest_mac_addr <= arp_reply_mac; tx_len<=42; end
-				`SEND_PKT_UDP: begin  dest_mac_addr <= arp_reply_mac; /*FIXME*/  tx_len<=udp_tx_pending_data+`HEADER_MAC+`HEADER_IP+`HEADER_UDP; udp_payload_size<=udp_tx_pending_data;/*TODO: limit to 1472*/ end
+				`SEND_PKT_UDP: begin  dest_mac_addr <= arp_reply_mac; /*FIXME*/  tx_len<=udp_tx_pending_data+`HEADER_MAC+`HEADER_IP+`HEADER_UDP; udp_payload_size<=udp_tx_pending_data; end
 			endcase
 			eth_tx_state <= `TX_ST_HEADER;
 			tx_pos<=1;
