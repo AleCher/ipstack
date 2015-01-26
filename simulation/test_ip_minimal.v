@@ -1,27 +1,5 @@
 `timescale 1ns / 1ps
 
-////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer:
-//
-// Create Date:   19:52:13 10/26/2013
-// Design Name:   ip_minimal
-// Module Name:   /home/alecher/devboard_eth/test_ip_minimal.v
-// Project Name:  devboard_eth
-// Target Device:  
-// Tool versions:  
-// Description: 
-//
-// Verilog Test Fixture created by ISE for module: ip_minimal
-//
-// Dependencies:
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-////////////////////////////////////////////////////////////////////////////////
-
 module test_ip_minimal;
 
 	// Inputs
@@ -33,7 +11,7 @@ module test_ip_minimal;
 	reg eth_rx_frame_good;
 	reg eth_rx_frame_bad;
 	reg [15: 0] udp_tx_pending_data; //max 1472 byte
-	wire [7:0] udp_tx;
+	reg [7:0] udp_tx;
 
 	// Outputs
 	wire [7:0] eth_tx_data;
@@ -47,7 +25,8 @@ module test_ip_minimal;
 		.eth_tx_clk(eth_tx_clk), 
 		.eth_tx_data(eth_tx_data), 
 		.eth_tx_data_en(eth_tx_data_en), 
-		.eth_tx_ack(eth_tx_ack), 
+		.eth_tx_ack(eth_tx_ack),
+
 		.eth_rx_clk(eth_rx_clk), 
 		.eth_rx_data(eth_rx_data), 
 		.eth_rx_data_valid(eth_rx_data_valid), 
@@ -70,19 +49,13 @@ module test_ip_minimal;
 		eth_rx_frame_good = 0;
 		eth_rx_frame_bad = 0;
 		udp_tx_pending_data = 0;
-		//udp_tx = 8'hBA;
+		udp_tx = 0;
 
 		forever begin
 			#4 eth_tx_clk<=~eth_tx_clk;
 			#1 eth_rx_clk<=~eth_rx_clk;
 		end
-		// Wait 100 ns for global reset to finish
-		#100;
-        
-		// Add stimulus here
-
 	end
-	
 
 reg eth_tx_data_en_r=0;
 reg [4:0] ask_delay=0;
@@ -107,26 +80,37 @@ initial $readmemh ("pkg_udp.hex", udp) ;
 reg [4:0] send_state = 0;
 reg [4:0] send_state_next = 0;
 
-reg [31:0]w=100;
+reg [31:0] w = 100;
 
-reg [9:0] pkg_pos=0;
+reg [9:0] pkg_pos = 0;
 reg need_answer = 0;
 
-always @(posedge eth_rx_clk)
-    case (send_state)
+always @(posedge eth_rx_clk) case (send_state)
 	0: if (w) w<=w-1; else send_state<=10;
-	
+
 	2: begin
 		w<=4;
 		send_state<=3;
 		pkg_pos<=0;
 	end
-	   
-	3: if (w) w <= w - 1; else begin send_state<=4; eth_rx_frame_good<=1; end
-	4: begin send_state<=need_answer?5:6; eth_rx_frame_good<=0; end
+    
+	3: begin
+		if (w) w <= w - 1;
+		else begin
+			send_state<=4;
+			eth_rx_frame_good<=1;
+		end
+	end
+
+	4: begin
+		send_state<=need_answer?5:6;
+		eth_rx_frame_good<=0;
+	end
+
 	5: if (eth_tx_data_en) send_state<=6;
 	6: if (!eth_tx_data_en) send_state<=send_state_next;
-	
+
+	// Send ARP request
 	10: begin
 		eth_rx_data_valid<=1;
 		if (pkg_pos!=arp_ack_len) begin
@@ -139,7 +123,8 @@ always @(posedge eth_rx_clk)
 			need_answer<=1;
 		end
 	end
-	
+
+	// Send short UDP packet
 	11: begin
 		eth_rx_data_valid<=1;
 		if (pkg_pos!=udp_len) begin
@@ -148,28 +133,91 @@ always @(posedge eth_rx_clk)
 		end else begin
 			eth_rx_data_valid<=0;
 			send_state<=2;
-			send_state_next<=11;
+			send_state_next<=14;
 			need_answer<=0;
 		end
 	end
-    endcase
+	
+	
+	14: begin
+		w <= 1000;
+		send_state <= 15;
+	end
+	
+	15: begin
+		if (w) w <= w - 1;
+		else $finish();
+	end
+endcase
 
-wire [15:0] rd_data_count;
-always @(eth_tx_clk) udp_tx_pending_data <= rd_data_count<1472 ? rd_data_count : 1472;
+// --- PCAP output
+integer t = 0;
+initial forever #1 t <= t + 1;
 
-eth_fifo fifo (
-  .rst(1'b0), // input rst
-  .wr_clk(eth_rx_clk), // input wr_clk
-  .din(udp_rx), // input [7 : 0] din
-  .wr_en(udp_rx_dv), // input wr_en
-  .full(full), // output full
+integer pcap;
+initial begin
+	pcap = $fopen("test.pcap", "wb");
+	$fwrite(pcap, "%u", 192'hA1B2C3D4_00040002_00000000_00000000_FFFF0000_00000001);
+end
 
-  .rd_clk(eth_tx_clk), // input rd_clk
-  .rd_en(udp_tx_rden), // input rd_en
-  .dout(udp_tx), // output [7 : 0] dout
-  .empty(), // output empty
-  .rd_data_count(rd_data_count) // output [15 : 0] rd_data_count
-);
- 
+// TX
+reg [8:0] tx_packet [9100:0];
+integer tx_packet_len = 0;
+integer tx_packet_readpos;
+
+reg [1:0] eth_tx_pkt = 0;
+always @(posedge eth_tx_data_en) begin
+	$display("TX begin");
+	eth_tx_pkt <= 1;
+	tx_packet_len <= 0;
+end
+
+always @(posedge eth_tx_ack) begin
+	eth_tx_pkt <= eth_tx_pkt + 1;
+end
+
+always @(posedge eth_tx_clk)
+	if (eth_tx_data_en && eth_tx_pkt==2) begin
+		$write("%X ", eth_tx_data);
+		tx_packet[tx_packet_len] <= eth_tx_data;
+		tx_packet_len <= tx_packet_len + 1;
+	end
+
+always @(negedge eth_tx_data_en) 
+	if (eth_tx_pkt==2) begin
+		$display("\nTX end");
+		eth_tx_pkt <= 0;
+		$fwrite(pcap, "%u", {t, 32'h0, tx_packet_len, tx_packet_len});
+		for (tx_packet_readpos = 0; tx_packet_readpos < tx_packet_len; tx_packet_readpos = tx_packet_readpos + 1)
+			$fwrite(pcap, "%c", tx_packet[tx_packet_readpos]);
+	end
+
+// RX
+reg [8:0] rx_packet [9100:0];
+integer rx_packet_len = 0;
+integer rx_packet_readpos;
+
+always @(posedge eth_rx_data_valid) begin
+	$display("RX begin");
+	rx_packet_len <= 0;
+end
+
+always @(posedge eth_rx_clk)
+	if (eth_rx_data_valid) begin
+		$write("%X ", eth_rx_data);
+		rx_packet[rx_packet_len] <= eth_rx_data;
+		rx_packet_len <= rx_packet_len + 1;
+	end
+
+always @(negedge eth_rx_data_valid) begin
+	$display("\nRX end");
+	if (rx_packet_len) begin
+		$fwrite(pcap, "%u", {t, 32'h0, rx_packet_len, rx_packet_len});
+		for (rx_packet_readpos = 0; rx_packet_readpos < rx_packet_len; rx_packet_readpos = rx_packet_readpos + 1)
+			$fwrite(pcap, "%c", rx_packet[rx_packet_readpos]);
+	end
+end
+
+// ---
+
 endmodule
-
