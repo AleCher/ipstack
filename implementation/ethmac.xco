@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 13.3
-# Date: Sat Nov  2 17:04:41 2013
+# Date: Tue Jan 27 00:16:52 2015
 #
 ##############################################################
 #
@@ -83,7 +83,7 @@ CSET rx_half_duplex_enable_0=false
 CSET rx_half_duplex_enable_1=false
 CSET rx_in_band_fcs_enable_0=false
 CSET rx_in_band_fcs_enable_1=false
-CSET rx_jumbo_frame_enable_0=false
+CSET rx_jumbo_frame_enable_0=true
 CSET rx_jumbo_frame_enable_1=false
 CSET rx_reset_0=false
 CSET rx_reset_1=false
@@ -103,7 +103,7 @@ CSET tx_ifg_adjust_enable_0=false
 CSET tx_ifg_adjust_enable_1=false
 CSET tx_in_band_fcs_enable_0=false
 CSET tx_in_band_fcs_enable_1=false
-CSET tx_jumbo_frame_enable_0=false
+CSET tx_jumbo_frame_enable_0=true
 CSET tx_jumbo_frame_enable_1=false
 CSET tx_reset_0=false
 CSET tx_reset_1=false
@@ -126,4 +126,4 @@ CSET unicast_pause_mac_address_1_6=FF
 MISC pkg_timestamp=2011-10-05T00:25:59.000Z
 # END Extra information
 GENERATE
-# CRC: c23428bf
+# CRC: 512d226f

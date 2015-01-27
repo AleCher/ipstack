@@ -480,9 +480,9 @@ module ethmac
     // Transmitter is not held in reset not asserted (normal operating mode)
     //synthesis attribute EMAC0_TXRESET of v5_emac is "FALSE"
     defparam v5_emac.EMAC0_TXRESET = "FALSE";  
-    // Transmitter Jumbo Frames (not enabled)
-    //synthesis attribute EMAC0_TXJUMBOFRAME_ENABLE of v5_emac is "FALSE"
-    defparam v5_emac.EMAC0_TXJUMBOFRAME_ENABLE = "FALSE";  
+    // Transmitter Jumbo Frames (enabled)
+    //synthesis attribute EMAC0_TXJUMBOFRAME_ENABLE of v5_emac is "TRUE"
+    defparam v5_emac.EMAC0_TXJUMBOFRAME_ENABLE = "TRUE";    
     // Transmitter In-band FCS (not enabled)
     //synthesis attribute EMAC0_TXINBANDFCS_ENABLE of v5_emac is "FALSE"
     defparam v5_emac.EMAC0_TXINBANDFCS_ENABLE = "FALSE";  
@@ -501,9 +501,9 @@ module ethmac
     // Receiver is not held in reset not asserted (normal operating mode)
     //synthesis attribute EMAC0_RXRESET of v5_emac is "FALSE"
     defparam v5_emac.EMAC0_RXRESET = "FALSE";  
-    // Receiver Jumbo Frames (not enabled)
-    //synthesis attribute EMAC0_RXJUMBOFRAME_ENABLE of v5_emac is "FALSE"
-    defparam v5_emac.EMAC0_RXJUMBOFRAME_ENABLE = "FALSE";  
+    // Receiver Jumbo Frames (enabled)
+    //synthesis attribute EMAC0_RXJUMBOFRAME_ENABLE of v5_emac is "TRUE"
+    defparam v5_emac.EMAC0_RXJUMBOFRAME_ENABLE = "TRUE";    
     // Receiver In-band FCS (not enabled)
     //synthesis attribute EMAC0_RXINBANDFCS_ENABLE of v5_emac is "FALSE"
     defparam v5_emac.EMAC0_RXINBANDFCS_ENABLE = "FALSE";  
