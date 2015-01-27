@@ -158,7 +158,7 @@ always @(posedge eth_rx_clk) case (send_state)
 	end
 
 	14: begin
-		w <= 1000;
+		w <= 10;
 		send_state <= 15;
 	end
 	
@@ -166,7 +166,7 @@ always @(posedge eth_rx_clk) case (send_state)
 		if (w) w <= w - 1;
 		else begin
 			finish_cond[0] = 1;
-			send_state <= 11;
+			send_state <= 10;
 		end
 	end
 endcase
