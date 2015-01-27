@@ -34,8 +34,8 @@ wire tx_clk;
 wire rx_clk;
 
 assign ETH_RESET = 1'b1; // active lo
-assign udp_rx_clk = tx_clk;
-assign udp_tx_clk = rx_clk;
+assign udp_rx_clk = rx_clk;
+assign udp_tx_clk = tx_clk;
 
 wire [7:0] emac0_rx_data;
 wire       emac0_rx_data_valid;
