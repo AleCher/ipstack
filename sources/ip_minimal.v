@@ -75,7 +75,7 @@ end else rx_pos <= 0;
 `define SEND_PKT_ARP_REPLY 1
 `define SEND_PKT_UDP       2
 
-reg [7:0] rx_send_event;
+reg [7:0] rx_send_event = 0;
 reg reply_req=0;
 reg reply_ack=0;
 
@@ -150,25 +150,25 @@ else */case (rx_state)
 			endcase
 		end
 
-	`RX_ST_PKT_IP_UDP:
+	`RX_ST_PKT_IP_UDP: begin
 		case (rx_pos)
 			//34 35 src port
 			//36 37 dst port
-			39: rx_udp_len <= eth_rx_data_word-8-1;
+			39: rx_udp_len <= eth_rx_data_word - 8;
 			//40 41 crc
 			41: begin
 				// TODO: Check CRC
-				rx_state <= `RX_ST_PKT_IP_UDP_PAYLOAD;
+				rx_state <= rx_udp_len ? `RX_ST_PKT_IP_UDP_PAYLOAD : `RX_ST_PKT_GOOD_OR_BAD;
 			end
 		endcase
-		
+		rx_send_event <= `SEND_PKT_NONE;
+	end
+
 	`RX_ST_PKT_IP_UDP_PAYLOAD:
-		if (rx_udp_len) begin
-			rx_udp_len<=rx_udp_len-1;
-		end else begin
+		if (rx_udp_len != 1 && eth_rx_data_valid) begin
+			rx_udp_len <= rx_udp_len - 1;
+		end else
 			rx_state<= `RX_ST_PKT_GOOD_OR_BAD;
-			rx_send_event <= `SEND_PKT_NONE;
-		end
 		
 	`RX_ST_PKT_GOOD_OR_BAD:
 		if (eth_rx_frame_good || eth_rx_frame_bad) begin
