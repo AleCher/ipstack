@@ -69,14 +69,18 @@ always @(posedge eth_tx_clk) begin
 	eth_tx_ack<=ask_delay[4];
 end
 
-parameter udp_len = 50;
-reg [7:0] udp [udp_len-1:0];
-
 parameter arp_ack_len = 42;
 reg [7:0] arp_ack [arp_ack_len-1:0] ;
-
 initial $readmemh ("pkg_arp_ack.hex", arp_ack) ;
+
+parameter udp_null_len = 42;
+reg [7:0] udp_null [udp_null_len-1:0];
+initial $readmemh ("pkg_udp_null.hex", udp_null) ;
+
+parameter udp_len = 50;
+reg [7:0] udp [udp_len-1:0];
 initial $readmemh ("pkg_udp.hex", udp) ;
+
 
 reg [4:0] send_state = 0;
 reg [4:0] send_state_next = 0;
@@ -125,8 +129,22 @@ always @(posedge eth_rx_clk) case (send_state)
 		end
 	end
 
-	// Send short UDP packet
+	// Send null UDP packet
 	11: begin
+		eth_rx_data_valid<=1;
+		if (pkg_pos!=udp_null_len) begin
+			pkg_pos<=pkg_pos+1;
+			eth_rx_data<=udp_null[pkg_pos];
+		end else begin
+			eth_rx_data_valid<=0;
+			send_state<=2;
+			send_state_next<=12;
+			need_answer<=0;
+		end
+	end
+
+	// Send short UDP packet
+	12: begin
 		eth_rx_data_valid<=1;
 		if (pkg_pos!=udp_len) begin
 			pkg_pos<=pkg_pos+1;
@@ -138,8 +156,7 @@ always @(posedge eth_rx_clk) case (send_state)
 			need_answer<=0;
 		end
 	end
-	
-	
+
 	14: begin
 		w <= 1000;
 		send_state <= 15;
