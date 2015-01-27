@@ -1,6 +1,12 @@
 `timescale 1ns / 1ps
 
-module eth_if(
+module eth_if #(
+	parameter MY_MAC = 48'h00_AA_BB_CC_DD_EE,
+	parameter MY_IP = {8'd10, 8'd5, 8'd5, 8'd5},
+
+	parameter DEST_MAC = 48'h30_85_A9_13_05_32,
+	parameter DEST_IP = {8'd10, 8'd5, 8'd5, 8'd1}
+) (
 	input wire rst,
 	input wire clk_200,
 	
@@ -23,7 +29,7 @@ module eth_if(
 	output wire [7:0] udp_rx,
 	output wire udp_rx_dv,
 
-	input wire [15: 0] udp_tx_pending_data, //max 1472 byte
+	input wire [15: 0] udp_tx_pending_data,
 	output wire udp_tx_clk,
 	input wire [7:0] udp_tx,
 	output wire udp_tx_rden
@@ -127,7 +133,13 @@ defparam gmii_rxc0_delay.IDELAY_VALUE = 0;
 defparam gmii_rxc0_delay.DELAY_SRC = "I";
 defparam gmii_rxc0_delay.SIGNAL_PATTERN = "CLOCK";
 
-ip_minimal ipcore (
+ip_minimal #(
+	.MY_MAC(MY_MAC),
+	.MY_IP(MY_IP),
+
+	.DEST_MAC(DEST_MAC),
+	.DEST_IP(DEST_IP)
+) ipcore (
 	.eth_tx_clk(tx_clk), 
 	.eth_tx_data(emac0_tx_data), 
 	.eth_tx_data_en(emac0_tx_data_valid), 

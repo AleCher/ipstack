@@ -1,7 +1,13 @@
 `timescale 1ns / 1ps
 
-module ip_minimal(
-//Ethernet MAC
+module ip_minimal #(
+	parameter MY_MAC = 48'h00_AA_BB_CC_DD_EE,
+	parameter MY_IP = {8'd10, 8'd5, 8'd5, 8'd5},
+
+	parameter DEST_MAC = 48'h30_85_A9_13_05_32, // TODO: Implement ARP request
+	parameter DEST_IP = {8'd10, 8'd5, 8'd5, 8'd1}
+) (
+// Ethernet MAC
     input wire         eth_tx_clk,
     output reg [ 7: 0] eth_tx_data,
     output reg         eth_tx_data_en,
@@ -12,7 +18,8 @@ module ip_minimal(
     input wire         eth_rx_data_valid,
     input wire         eth_rx_frame_good,
     input wire         eth_rx_frame_bad,
-    
+
+// UDP
     output reg [ 7: 0] udp_rx,
     output reg         udp_rx_dv,
     
@@ -30,12 +37,11 @@ initial begin
 end
 
 
-reg [47:0] my_mac_addr = 48'h00_AA_BB_CC_DD_EE;
-wire [31:0] my_ip_addr = {8'd10, 8'd5, 8'd5, 8'd5}; //{8'd192, 8'd168, 8'd1, 8'd123};
-/*
+reg [47:0] my_mac_addr = MY_MAC;
+reg [31:0] my_ip_addr = MY_IP;
 
-reg [47:0] dest_mac_addr = 48'h30_85_a9_13_05_32;
-reg [31:0] dest_ip_addr =  32'h0a_05_05_01;*/
+reg [47:0] dest_mac_addr;
+reg [31:0] dest_ip_addr;
 
 // ----------------- Rx
 
@@ -195,7 +201,6 @@ reg [10:0] eth_tx_state = `TX_ST_WAIT;
 reg [15:0] tx_pos;
 reg [15:0] tx_len = 0;
 reg eth_tx_start=0;
-reg [47:0] dest_mac_addr;
 reg [7:0] tx_send_event=0;
 
 reg [7:0] eth_tx_data_payload;
@@ -211,22 +216,23 @@ reg [23:0] tx_ip_check; //FIXME
 
 always @(posedge eth_tx_clk)
 begin
-	if (reply_ack != reply_req) begin
-		reply_ack <= reply_req;
-		tx_send_event <= rx_send_event;
-	end else
-	if (udp_tx_pending_data) begin
-		tx_send_event <= `SEND_PKT_UDP;
-	end
-
 	case (eth_tx_state)
-		`TX_ST_WAIT: if (tx_send_event) begin
-			case (tx_send_event)
-				`SEND_PKT_ARP_REPLY: begin dest_mac_addr <= arp_reply_mac; tx_len<=42; end
-				`SEND_PKT_UDP: begin  dest_mac_addr <= arp_reply_mac; /*FIXME*/  tx_len<=udp_tx_pending_data+`HEADER_MAC+`HEADER_IP+`HEADER_UDP; udp_payload_size<=udp_tx_pending_data; end
-			endcase
-			eth_tx_state <= `TX_ST_HEADER;
-			tx_pos<=1;
+		`TX_ST_WAIT: begin
+			if (reply_ack != reply_req) begin
+				reply_ack <= reply_req;
+				tx_send_event = rx_send_event;
+			end else
+				if (udp_tx_pending_data)
+					tx_send_event = `SEND_PKT_UDP;
+
+			if (tx_send_event) begin
+				case (tx_send_event)
+					`SEND_PKT_ARP_REPLY: begin dest_mac_addr <= arp_reply_mac; tx_len<=42; end
+					`SEND_PKT_UDP: begin dest_mac_addr <= DEST_MAC; dest_ip_addr <= DEST_IP; tx_len<=udp_tx_pending_data+`HEADER_MAC+`HEADER_IP+`HEADER_UDP; udp_payload_size<=udp_tx_pending_data; end
+				endcase
+				eth_tx_state <= `TX_ST_HEADER;
+				tx_pos<=1;
+			end
 		end
 
 		`TX_ST_HEADER: begin
@@ -260,7 +266,7 @@ begin
 				case (tx_pos)
 				
 					20: tx_ip_check <= 16'h4500 + udp_payload_size_ip + 16'hBABA + 16'h0511;
-					21: tx_ip_check <= tx_ip_check + my_ip_addr[31:16]+my_ip_addr[15:0]+arp_reply_ip[31:16]+arp_reply_ip[15:0];
+					21: tx_ip_check <= tx_ip_check + my_ip_addr[31:16]+my_ip_addr[15:0]+dest_ip_addr[31:16]+dest_ip_addr[15:0];
 					22: tx_ip_check <= tx_ip_check[15:0]+tx_ip_check[23:16];
 					23: tx_ip_check <= ~tx_ip_check[15:0];
 					
@@ -277,7 +283,7 @@ begin
 		`TX_ST_END: begin
 			eth_tx_data_en<=0;
 			eth_tx_state <= `TX_ST_END_WAIT;
-			tx_send_event<=`SEND_PKT_NONE;
+			tx_send_event = `SEND_PKT_NONE;
 		end
 		
 		`TX_ST_END_WAIT: eth_tx_state <= `TX_ST_WAIT;
@@ -356,10 +362,10 @@ always @(tx_pos)
 		28: eth_tx_data_payload=my_ip_addr[15: 8];
 		29: eth_tx_data_payload=my_ip_addr[ 7: 0];
 
-		30: eth_tx_data_payload=arp_reply_ip[31:24]; //Destination IP FIXME
-		31: eth_tx_data_payload=arp_reply_ip[23:16];
-		32: eth_tx_data_payload=arp_reply_ip[15: 8];
-		33: eth_tx_data_payload=arp_reply_ip[ 7: 0];
+		30: eth_tx_data_payload=dest_ip_addr[31:24]; //Destination IP
+		31: eth_tx_data_payload=dest_ip_addr[23:16];
+		32: eth_tx_data_payload=dest_ip_addr[15: 8];
+		33: eth_tx_data_payload=dest_ip_addr[ 7: 0];
 
 		//UDP
 		34: eth_tx_data_payload=8'h11; // Source port
